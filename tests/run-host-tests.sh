@@ -24,7 +24,7 @@ c++ -std=c++11 -D__amigaos__ -I"$C" -I"$C/7zip/Bundles/Alone2" -o "$WORK/filenam
 "$WORK/filename_test"
 
 # compat/amiga_wide.c: Latin-1 wide strings in place of libnix's
-R="-Dwcslen=aw_wcslen -Dwcscmp=aw_wcscmp -Dtowupper=aw_towupper -Dtowlower=aw_towlower -Dmbstowcs=aw_mbstowcs -Dwcstombs=aw_wcstombs"
+R="-Dwcslen=aw_wcslen -Dwcscmp=aw_wcscmp -Dtowupper=aw_towupper -Dtowlower=aw_towlower -Dmbstowcs=aw_mbstowcs -Dwcstombs=aw_wcstombs -Dwmemcpy=aw_wmemcpy -Dwmemmove=aw_wmemmove -Dwmemset=aw_wmemset -Dwcscpy=aw_wcscpy -Dwcsncpy=aw_wcsncpy -Dwcscat=aw_wcscat -Dwcsncmp=aw_wcsncmp -Dwcschr=aw_wcschr"
 cc $R -c -o "$WORK/amiga_wide.o" "$HERE/compat/amiga_wide.c"
 cc -o "$WORK/wide_test" "$HERE/tests/wide_test.c" "$WORK/amiga_wide.o"
 "$WORK/wide_test"

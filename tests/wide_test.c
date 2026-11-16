@@ -11,6 +11,14 @@ wint_t aw_towupper(wint_t);
 wint_t aw_towlower(wint_t);
 size_t aw_mbstowcs(wchar_t *, const char *, size_t);
 size_t aw_wcstombs(char *, const wchar_t *, size_t);
+wchar_t *aw_wmemcpy(wchar_t *, const wchar_t *, size_t);
+wchar_t *aw_wmemmove(wchar_t *, const wchar_t *, size_t);
+wchar_t *aw_wmemset(wchar_t *, wchar_t, size_t);
+wchar_t *aw_wcscpy(wchar_t *, const wchar_t *);
+wchar_t *aw_wcsncpy(wchar_t *, const wchar_t *, size_t);
+wchar_t *aw_wcscat(wchar_t *, const wchar_t *);
+int aw_wcsncmp(const wchar_t *, const wchar_t *, size_t);
+wchar_t *aw_wcschr(const wchar_t *, wchar_t);
 
 static int fails;
 #define CHECK(c) do { if (!(c)) { printf("FAIL %s:%d %s\n", __FILE__, __LINE__, #c); fails++; } } while (0)
@@ -36,6 +44,28 @@ int main(void)
     CHECK(aw_towlower('Z') == 'z' && aw_towlower(0xC9) == 0xE9 && aw_towlower(0xD7) == 0xD7);
     CHECK(aw_mbstowcs(w, name, 4) == 4); /* stops at n with no terminator */
 
-    printf("wide_test: %s\n", fails ? "FAIL" : "13/13 pass");
+    /* 7-Zip's UString copies with wmemcpy: a whole 25-character error
+     * text must come through, not the first few characters */
+    {
+        const wchar_t *e = L"No such file or directory";
+        wchar_t b[40];
+        CHECK(aw_wmemcpy(b, e, 26) == b && aw_wcscmp(b, e) == 0);
+        aw_wmemmove(b + 1, b, 25); /* overlapping, forward */
+        CHECK(b[0] == L'N' && b[1] == L'N' && b[25] == L'y');
+        b[26] = 0;
+        aw_wmemmove(b, b + 1, 26); /* overlapping, back */
+        CHECK(aw_wcscmp(b, e) == 0);
+        aw_wmemset(b, L'x', 3); b[3] = 0;
+        CHECK(aw_wcscmp(b, L"xxx") == 0);
+        CHECK(aw_wcscpy(b, L"RAM:") == b && aw_wcscat(b, L"z/t.7z") == b);
+        CHECK(aw_wcscmp(b, L"RAM:z/t.7z") == 0);
+        aw_wcsncpy(b, L"ab", 5);
+        CHECK(b[0] == L'a' && b[2] == 0 && b[4] == 0);
+        CHECK(aw_wcsncmp(L"7zip", L"7zz", 2) == 0 && aw_wcsncmp(L"7zip", L"7zz", 3) < 0);
+        CHECK(aw_wcschr(L"RAM:z", L':') != NULL && *aw_wcschr(L"RAM:z", L':') == L':');
+        CHECK(aw_wcschr(L"RAM", L'/') == NULL && aw_wcschr(L"RAM", 0) != NULL);
+    }
+
+    printf("wide_test: %s\n", fails ? "FAIL" : "23/23 pass");
     return fails != 0;
 }

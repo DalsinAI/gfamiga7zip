@@ -9,8 +9,9 @@
 /* Wide strings.  The Amiga's own text is Latin-1, so a multibyte string
  * here is one byte per character and every byte maps straight to the
  * same Unicode code point.  libnix's wide-character routines do not agree
- * with this compiler's wchar_t (7zz printed mangled file names and could
- * not find "7z" or "zip" by name), so these replace them. */
+ * with this compiler's 4-byte wchar_t (7zz printed mangled file names and
+ * error texts and could not find "7z" or "zip" by name), so these replace
+ * every one 7-Zip calls. */
 size_t wcslen(const wchar_t *s)
 {
     const wchar_t *p = s;
@@ -72,4 +73,77 @@ size_t wcstombs(char *d, const wchar_t *s, size_t n)
             return i;
     }
     return i;
+}
+
+wchar_t *wmemcpy(wchar_t *d, const wchar_t *s, size_t n)
+{
+    size_t i;
+    for (i = 0; i < n; i++)
+        d[i] = s[i];
+    return d;
+}
+
+wchar_t *wmemmove(wchar_t *d, const wchar_t *s, size_t n)
+{
+    size_t i;
+    if (d < s)
+        for (i = 0; i < n; i++)
+            d[i] = s[i];
+    else
+        for (i = n; i > 0; i--)
+            d[i - 1] = s[i - 1];
+    return d;
+}
+
+wchar_t *wmemset(wchar_t *d, wchar_t c, size_t n)
+{
+    size_t i;
+    for (i = 0; i < n; i++)
+        d[i] = c;
+    return d;
+}
+
+wchar_t *wcscpy(wchar_t *d, const wchar_t *s)
+{
+    wchar_t *r = d;
+    while ((*d++ = *s++) != 0)
+        ;
+    return r;
+}
+
+wchar_t *wcsncpy(wchar_t *d, const wchar_t *s, size_t n)
+{
+    size_t i = 0;
+    for (; i < n && s[i]; i++)
+        d[i] = s[i];
+    for (; i < n; i++)
+        d[i] = 0;
+    return d;
+}
+
+wchar_t *wcscat(wchar_t *d, const wchar_t *s)
+{
+    wcscpy(d + wcslen(d), s);
+    return d;
+}
+
+int wcsncmp(const wchar_t *a, const wchar_t *b, size_t n)
+{
+    for (; n; n--, a++, b++) {
+        if (*a != *b)
+            return (*a < *b) ? -1 : 1;
+        if (!*a)
+            break;
+    }
+    return 0;
+}
+
+wchar_t *wcschr(const wchar_t *s, wchar_t c)
+{
+    for (;; s++) {
+        if (*s == c)
+            return (wchar_t *)s;
+        if (!*s)
+            return NULL;
+    }
 }
