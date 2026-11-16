@@ -89,6 +89,33 @@ wchar_t *wcsstr(const wchar_t *hay, const wchar_t *needle)
     return NULL;
 }
 
+/* GCC's __sync builtins for 4 bytes (7-Zip's InterlockedIncrement and
+   InterlockedDecrement in Threads.c), which the 68040 stove leaves as calls:
+   one CPU, so the add with interrupts off is atomic. Named by asm label,
+   as GCC keeps the C names for its builtins. */
+unsigned int amiga_sync_add_and_fetch_4(volatile void *p, unsigned int v)
+    __asm__("___sync_add_and_fetch_4");
+unsigned int amiga_sync_sub_and_fetch_4(volatile void *p, unsigned int v)
+    __asm__("___sync_sub_and_fetch_4");
+
+unsigned int amiga_sync_add_and_fetch_4(volatile void *p, unsigned int v)
+{
+    unsigned int r;
+    Disable();
+    r = *(volatile unsigned int *)p += v;
+    Enable();
+    return r;
+}
+
+unsigned int amiga_sync_sub_and_fetch_4(volatile void *p, unsigned int v)
+{
+    unsigned int r;
+    Disable();
+    r = *(volatile unsigned int *)p -= v;
+    Enable();
+    return r;
+}
+
 /* System.cpp's GetRamSize: the Amiga headers clash with 7-Zip's own types */
 unsigned long amiga_total_mem(void)
 {
