@@ -38,6 +38,8 @@ fi
 # --- compat: what libnix leaves out ---------------------------------------------
 ARCH="-noixemul -m68040 -fno-delete-null-pointer-checks -D__amigaos__ -include $HERE/compat/amiga_compat.h"
 m68k-amigaos-gcc $ARCH -O2 -c "$HERE/compat/amiga_compat.c" -o "$WORK/amiga_compat.o"
+# 7-Zip's own sources see compat/include's pwd.h and grp.h, not the NDK's
+ARCH="$ARCH -I$HERE/compat/include"
 
 # --- 7zz with upstream's makefiles ------------------------------------------------
 # CFLAGS_BASE without -Werror and -fPIC (no shared objects on the Amiga);

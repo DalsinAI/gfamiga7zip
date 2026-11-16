@@ -32,29 +32,6 @@ index 37c1f49..7a53927 100644
  #else
  #include <sys/sysmacros.h>
  #endif
-diff --git a/CPP/7zip/UI/Common/EnumDirItems.cpp b/CPP/7zip/UI/Common/EnumDirItems.cpp
-index cada2e6..0e493ae 100644
---- a/CPP/7zip/UI/Common/EnumDirItems.cpp
-+++ b/CPP/7zip/UI/Common/EnumDirItems.cpp
-@@ -5,7 +5,17 @@
- #include <wchar.h>
- // #include <stdio.h>
- 
--#ifndef _WIN32
-+#if !defined(_WIN32) && defined(__amigaos__)
-+/* the NDK's pwd.h and grp.h bring exec/types.h, whose BYTE, WORD and BOOL
-+   clash with 7-Zip's; there is no user database, so these are all it needs
-+   (GFAmiga7Zip's compat/amiga_compat.c answers NULL) */
-+#include <sys/types.h>
-+struct passwd { char *pw_name; };
-+struct group { char *gr_name; };
-+extern "C" struct passwd *getpwuid(uid_t uid);
-+extern "C" struct group *getgrgid(gid_t gid);
-+#include "../../../Common/UTFConvert.h"
-+#elif !defined(_WIN32)
- #include <grp.h>
- #include <pwd.h>
- #include "../../../Common/UTFConvert.h"
 diff --git a/CPP/7zip/UI/Common/UpdateCallback.cpp b/CPP/7zip/UI/Common/UpdateCallback.cpp
 index bea31ce..a505699 100644
 --- a/CPP/7zip/UI/Common/UpdateCallback.cpp

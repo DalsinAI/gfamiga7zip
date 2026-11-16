@@ -57,7 +57,8 @@ int utimensat(int dirfd, const char *path, const struct timespec times[2], int f
     return utimes(path, tv);
 }
 
-/* no user database: 7zz stores and shows numbers, not names */
+/* no user database: 7zz stores and shows numbers, not names (the NDK's
+   pwd.h and grp.h give these structures; 7-Zip sees compat/include's) */
 struct passwd *getpwuid(uid_t uid) { (void)uid; return NULL; }
 struct group *getgrgid(gid_t gid) { (void)gid; return NULL; }
 
