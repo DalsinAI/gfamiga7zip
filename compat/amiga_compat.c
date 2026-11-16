@@ -5,6 +5,7 @@
  * SetFileDate through libnix.
  * Copyright (c) 2026 AmiCradle Team. GNU LGPL 2.1 or later, like 7-Zip. */
 #include <errno.h>
+#include <wchar.h>
 #include <stddef.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -61,6 +62,32 @@ int utimensat(int dirfd, const char *path, const struct timespec times[2], int f
    pwd.h and grp.h give these structures; 7-Zip sees compat/include's) */
 struct passwd *getpwuid(uid_t uid) { (void)uid; return NULL; }
 struct group *getgrgid(gid_t gid) { (void)gid; return NULL; }
+
+/* AmigaDOS files have no owner to change */
+int lchown(const char *path, uid_t owner, gid_t group)
+{
+    (void)path; (void)owner; (void)group;
+    errno = ENOSYS;
+    return -1;
+}
+
+/* newlib's wide-character string search, which libnix leaves out */
+wchar_t *wcsstr(const wchar_t *hay, const wchar_t *needle)
+{
+    size_t n;
+    if (!*needle)
+        return (wchar_t *)hay;
+    for (n = 0; needle[n]; n++)
+        ;
+    for (; *hay; hay++) {
+        size_t i = 0;
+        while (i < n && hay[i] == needle[i])
+            i++;
+        if (i == n)
+            return (wchar_t *)hay;
+    }
+    return NULL;
+}
 
 /* System.cpp's GetRamSize: the Amiga headers clash with 7-Zip's own types */
 unsigned long amiga_total_mem(void)

@@ -15,6 +15,25 @@ index af47668..5323d89 100644
    #define MY_ALIGN_IN_STRUCT(n) MY_ALIGN(n)
  #endif
  
+diff --git a/C/Alloc.c b/C/Alloc.c
+index 419fa37..cb49dd6 100644
+--- a/C/Alloc.c
++++ b/C/Alloc.c
+@@ -361,11 +361,12 @@ typedef
+ 
+ #ifndef _WIN32
+ #include <unistd.h> // for _POSIX_ADVISORY_INFO : for some linux
+-#if (defined(Z7_ALLOC_NO_OFFSET_ALLOCATOR) \
++#if !defined(__amigaos__) /* libnix has no posix_memalign */ && \
++    (defined(Z7_ALLOC_NO_OFFSET_ALLOCATOR) \
+         || defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 200112L) \
+         || defined(_POSIX_ADVISORY_INFO) && (_POSIX_ADVISORY_INFO >= 200112L) \
+         || defined(__APPLE__) \
+-        /* || defined(__linux__) */)
++        /* || defined(__linux__) */))
+   #define USE_posix_memalign
+   // #pragma message("USE_posix_memalign")
+ #endif
 diff --git a/CPP/7zip/Common/FileStreams.cpp b/CPP/7zip/Common/FileStreams.cpp
 index 37c1f49..7a53927 100644
 --- a/CPP/7zip/Common/FileStreams.cpp
@@ -50,7 +69,7 @@ index bea31ce..a505699 100644
  #include <sys/sysmacros.h>
  #endif
 diff --git a/CPP/7zip/UI/Console/Main.cpp b/CPP/7zip/UI/Console/Main.cpp
-index 34636cf..68053bd 100644
+index 34636cf..1c5b353 100644
 --- a/CPP/7zip/UI/Console/Main.cpp
 +++ b/CPP/7zip/UI/Console/Main.cpp
 @@ -34,7 +34,9 @@ typedef PROCESS_MEMORY_COUNTERS *PPROCESS_MEMORY_COUNTERS;
@@ -63,6 +82,15 @@ index 34636cf..68053bd 100644
  #include <sys/time.h>
  #include <sys/times.h>
  #endif // _WIN32
+@@ -822,7 +824,7 @@ int Main2(
+   SetFileApisToOEM();
+   #endif
+ 
+-#if 1 && !defined(_WIN32)
++#if 1 && !defined(_WIN32) && !defined(__amigaos__) /* AmigaDOS has no file-handle limit */
+   {
+     // We increase RLIMIT_NOFILE because a high limit makes it easier for 7-Zip to work with multi-volume archives.
+     struct rlimit a;
 @@ -999,7 +1001,7 @@ int Main2(
      
      #else

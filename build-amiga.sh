@@ -1,6 +1,6 @@
 #!/bin/sh
 # Builds 7-Zip's 7zz (the full archiver as a shell command) for GFOS (AmigaOS
-# 3.2.3 with GFOpenUp) with a stove: 68040, single-threaded (ST_MODE), with
+# 3.2.3 with GFOpenUp) with a stove: 68040, on the stove's pthreads, with
 # 7-Zip's own makefiles (CPP/7zip/Bundles/Alone2/makefile.gcc).
 #   STOVE=.../stoves/os32-gcc16-open6 OUT=out ./build-amiga.sh
 # 7-Zip is fetched at the commit 7zip.lock gives and patched with patches/;
@@ -43,14 +43,14 @@ ARCH="$ARCH -I$HERE/compat/include"
 
 # --- 7zz with upstream's makefiles ------------------------------------------------
 # CFLAGS_BASE without -Werror and -fPIC (no shared objects on the Amiga);
-# LIB2 without -lpthread -ldl (ST_MODE: no threads, no plugins)
+# LIB2: the stove's pthreads, no -ldl (no plugins)
 B="$SRC/CPP/7zip/Bundles/Alone2"
 left=$(( ${BUDGET_TOTAL:-840} - ($(date +%s) - t0) ))
 set +e
 (cd "$B" && timeout "$left" nice -n 19 make -k -j"$JOBS" -f ../../cmpl_gcc.mak \
-    CROSS_COMPILE=m68k-amigaos- ST_MODE=1 O=b/amiga MY_ARCH="$ARCH" \
+    CROSS_COMPILE=m68k-amigaos- O=b/amiga MY_ARCH="$ARCH" \
     CFLAGS_BASE="-O2 -c -DNDEBUG -D_REENTRANT" CFLAGS_WARN_WALL= LFLAGS_STRIP= \
-    LFLAGS_NOEXECSTACK= CC_SHARED= LIB2="$WORK/amiga_compat.o" > "$WORK/make.log" 2>&1)
+    LFLAGS_NOEXECSTACK= CC_SHARED= LIB2="$WORK/amiga_compat.o -lpthread" > "$WORK/make.log" 2>&1)
 rc=$?
 set -e
 grep -E -B2 'error|Error|undefined reference' "$WORK/make.log" | head -80

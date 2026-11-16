@@ -3,7 +3,7 @@
 7-Zip's `7zz`, the full archiver, as a shell command for GFOS (AmigaOS 3.2.3 with GFOpenUp), installed as a GFOpenUp part.
 
 - Packs and unpacks 7z, zip, tar, xz, gzip, bzip2 and zstd; unpacks rar, iso, cab, lzh, dmg and many more (`7zz i` lists them).
-- Needs a 68040. Single-threaded build; no other part needed.
+- Needs a 68040; no other part needed.
 - Install: `GFOpenUpTool INSTALL Parts/7Zip`. It goes to `SYS:C/7zz`, with the licence and readme in `SYS:Docs/7-Zip`.
 - AmigaDOS paths work as usual: `7zz a RAM:backup.7z Work:Projects/`, `7zz x Work:Downloads/game.zip -oWork:Games/`.
 - It sets up its own 256 KB stack, so the Shell's stack size does not matter.
