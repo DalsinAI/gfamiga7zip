@@ -63,6 +63,21 @@ index bea31ce..a505699 100644
  #else
  #include <sys/sysmacros.h>
  #endif
+diff --git a/CPP/7zip/UI/Console/ConsoleClose.cpp b/CPP/7zip/UI/Console/ConsoleClose.cpp
+index a184ffb..16f3318 100644
+--- a/CPP/7zip/UI/Console/ConsoleClose.cpp
++++ b/CPP/7zip/UI/Console/ConsoleClose.cpp
+@@ -73,8 +73,10 @@ CCtrlHandlerSetter::CCtrlHandlerSetter()
+   if (memo_sig_int == SIG_ERR)
+     throw "SetConsoleCtrlHandler fails (SIGINT)";
+   memo_sig_term = signal(SIGTERM, HandlerRoutine); // for kill -15 (before "kill -9")
++#ifndef __amigaos__ /* libnix has Ctrl-C (SIGINT) only: no SIGTERM to catch */
+   if (memo_sig_term == SIG_ERR)
+     throw "SetConsoleCtrlHandler fails (SIGTERM)";
++#endif
+ }
+ 
+ CCtrlHandlerSetter::~CCtrlHandlerSetter()
 diff --git a/CPP/7zip/UI/Console/Main.cpp b/CPP/7zip/UI/Console/Main.cpp
 index 34636cf..1c5b353 100644
 --- a/CPP/7zip/UI/Console/Main.cpp
