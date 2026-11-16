@@ -38,6 +38,7 @@ fi
 # --- compat: what libnix leaves out ---------------------------------------------
 ARCH="-noixemul -m68040 -fno-delete-null-pointer-checks -D__amigaos__ -include $HERE/compat/amiga_compat.h"
 m68k-amigaos-gcc $ARCH -O2 -c "$HERE/compat/amiga_compat.c" -o "$WORK/amiga_compat.o"
+m68k-amigaos-gcc $ARCH -O2 -c "$HERE/compat/amiga_wide.c" -o "$WORK/amiga_wide.o"
 # 7-Zip's own sources see compat/include's pwd.h and grp.h, not the NDK's
 ARCH="$ARCH -I$HERE/compat/include"
 
@@ -50,7 +51,7 @@ set +e
 (cd "$B" && timeout "$left" nice -n 19 make -k -j"$JOBS" -f ../../cmpl_gcc.mak \
     CROSS_COMPILE=m68k-amigaos- O=b/amiga MY_ARCH="$ARCH" \
     CFLAGS_BASE="-O2 -c -DNDEBUG -D_REENTRANT" CFLAGS_WARN_WALL= LFLAGS_STRIP= \
-    LFLAGS_NOEXECSTACK= CC_SHARED= LIB2="$WORK/amiga_compat.o -lpthread" > "$WORK/make.log" 2>&1)
+    LFLAGS_NOEXECSTACK= CC_SHARED= LIB2="$WORK/amiga_compat.o $WORK/amiga_wide.o -lpthread" > "$WORK/make.log" 2>&1)
 rc=$?
 set -e
 grep -E -B2 'error|Error|undefined reference' "$WORK/make.log" | head -80

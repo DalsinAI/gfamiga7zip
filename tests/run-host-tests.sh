@@ -22,3 +22,9 @@ c++ -std=c++11 -D__amigaos__ -I"$C" -I"$C/7zip/Bundles/Alone2" -o "$WORK/filenam
     "$C/Common/StringConvert.cpp" "$C/Common/UTFConvert.cpp" "$C/Common/MyVector.cpp" "$C/Common/IntToString.cpp" "$C/Common/MyWindows.cpp" \
     "$C/Windows/FileDir.cpp" "$C/Windows/FileFind.cpp" "$C/Windows/FileIO.cpp" "$C/Windows/TimeUtils.cpp" "$C/Common/Wildcard.cpp" "$WORK/Alloc.o" 2>&1 | grep -v "^$" | head -30
 "$WORK/filename_test"
+
+# compat/amiga_wide.c: Latin-1 wide strings in place of libnix's
+R="-Dwcslen=aw_wcslen -Dwcscmp=aw_wcscmp -Dtowupper=aw_towupper -Dtowlower=aw_towlower -Dmbstowcs=aw_mbstowcs -Dwcstombs=aw_wcstombs"
+cc $R -c -o "$WORK/amiga_wide.o" "$HERE/compat/amiga_wide.c"
+cc -o "$WORK/wide_test" "$HERE/tests/wide_test.c" "$WORK/amiga_wide.o"
+"$WORK/wide_test"

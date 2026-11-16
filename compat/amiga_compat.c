@@ -121,3 +121,4 @@ unsigned long amiga_total_mem(void)
 {
     return AvailMem(MEMF_TOTAL);
 }
+
