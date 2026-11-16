@@ -16,10 +16,10 @@ index af47668..5323d89 100644
  #endif
  
 diff --git a/C/Alloc.c b/C/Alloc.c
-index 419fa37..cb49dd6 100644
+index 419fa37..c27b1a3 100644
 --- a/C/Alloc.c
 +++ b/C/Alloc.c
-@@ -361,11 +361,12 @@ typedef
+@@ -361,7 +361,8 @@ typedef
  
  #ifndef _WIN32
  #include <unistd.h> // for _POSIX_ADVISORY_INFO : for some linux
@@ -29,11 +29,6 @@ index 419fa37..cb49dd6 100644
          || defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 200112L) \
          || defined(_POSIX_ADVISORY_INFO) && (_POSIX_ADVISORY_INFO >= 200112L) \
          || defined(__APPLE__) \
--        /* || defined(__linux__) */)
-+        /* || defined(__linux__) */))
-   #define USE_posix_memalign
-   // #pragma message("USE_posix_memalign")
- #endif
 diff --git a/CPP/7zip/Common/FileStreams.cpp b/CPP/7zip/Common/FileStreams.cpp
 index 37c1f49..7a53927 100644
 --- a/CPP/7zip/Common/FileStreams.cpp
