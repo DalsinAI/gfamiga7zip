@@ -1,0 +1,252 @@
+diff --git a/C/7zTypes.h b/C/7zTypes.h
+index af47668..5323d89 100644
+--- a/C/7zTypes.h
++++ b/C/7zTypes.h
+@@ -58,7 +58,12 @@ typedef int SRes;
+   #include <stdalign.h>
+   #define MY_ALIGN(n) alignas(n)
+   */
++  #if defined(__amigaos__)
++  /* the Amiga's hunk object files align to 8 bytes at most */
++  #define MY_ALIGN(n) __attribute__ ((aligned((n) > 8 ? 8 : (n))))
++  #else
+   #define MY_ALIGN(n) __attribute__ ((aligned(n)))
++  #endif
+   #define MY_ALIGN_IN_STRUCT(n) MY_ALIGN(n)
+ #endif
+ 
+diff --git a/C/Alloc.c b/C/Alloc.c
+index 419fa37..c27b1a3 100644
+--- a/C/Alloc.c
++++ b/C/Alloc.c
+@@ -361,7 +361,8 @@ typedef
+ 
+ #ifndef _WIN32
+ #include <unistd.h> // for _POSIX_ADVISORY_INFO : for some linux
+-#if (defined(Z7_ALLOC_NO_OFFSET_ALLOCATOR) \
++#if !defined(__amigaos__) /* libnix has no posix_memalign */ && \
++    (defined(Z7_ALLOC_NO_OFFSET_ALLOCATOR) \
+         || defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 200112L) \
+         || defined(_POSIX_ADVISORY_INFO) && (_POSIX_ADVISORY_INFO >= 200112L) \
+         || defined(__APPLE__) \
+diff --git a/CPP/7zip/Common/FileStreams.cpp b/CPP/7zip/Common/FileStreams.cpp
+index 37c1f49..7a53927 100644
+--- a/CPP/7zip/Common/FileStreams.cpp
++++ b/CPP/7zip/Common/FileStreams.cpp
+@@ -28,6 +28,12 @@ you should undefine it after including <sys/types.h>
+ #if defined(__APPLE__) || defined(__DragonFly__) || \
+     defined(BSD) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+ #include <sys/types.h>
++#elif defined(__amigaos__)
++#include <sys/types.h>
++#ifndef major
++#define major(d) ((unsigned)(d) >> 8 & 0xff)
++#define minor(d) ((unsigned)(d) & 0xff)
++#endif
+ #else
+ #include <sys/sysmacros.h>
+ #endif
+diff --git a/CPP/7zip/UI/Common/UpdateCallback.cpp b/CPP/7zip/UI/Common/UpdateCallback.cpp
+index bea31ce..a505699 100644
+--- a/CPP/7zip/UI/Common/UpdateCallback.cpp
++++ b/CPP/7zip/UI/Common/UpdateCallback.cpp
+@@ -11,6 +11,12 @@
+ #if defined(__APPLE__) || defined(__DragonFly__) || \
+     defined(BSD) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+ #include <sys/types.h>
++#elif defined(__amigaos__)
++#include <sys/types.h>
++#ifndef major
++#define major(d) ((unsigned)(d) >> 8 & 0xff)
++#define minor(d) ((unsigned)(d) & 0xff)
++#endif
+ #else
+ #include <sys/sysmacros.h>
+ #endif
+diff --git a/CPP/7zip/UI/Console/ConsoleClose.cpp b/CPP/7zip/UI/Console/ConsoleClose.cpp
+index a184ffb..16f3318 100644
+--- a/CPP/7zip/UI/Console/ConsoleClose.cpp
++++ b/CPP/7zip/UI/Console/ConsoleClose.cpp
+@@ -73,8 +73,10 @@ CCtrlHandlerSetter::CCtrlHandlerSetter()
+   if (memo_sig_int == SIG_ERR)
+     throw "SetConsoleCtrlHandler fails (SIGINT)";
+   memo_sig_term = signal(SIGTERM, HandlerRoutine); // for kill -15 (before "kill -9")
++#ifndef __amigaos__ /* libnix has Ctrl-C (SIGINT) only: no SIGTERM to catch */
+   if (memo_sig_term == SIG_ERR)
+     throw "SetConsoleCtrlHandler fails (SIGTERM)";
++#endif
+ }
+ 
+ CCtrlHandlerSetter::~CCtrlHandlerSetter()
+diff --git a/CPP/7zip/UI/Console/Main.cpp b/CPP/7zip/UI/Console/Main.cpp
+index 34636cf..1c5b353 100644
+--- a/CPP/7zip/UI/Console/Main.cpp
++++ b/CPP/7zip/UI/Console/Main.cpp
+@@ -34,7 +34,9 @@ typedef PROCESS_MEMORY_COUNTERS *PPROCESS_MEMORY_COUNTERS;
+ 
+ #else // _WIN32
+ #include <unistd.h>
++#ifndef __amigaos__
+ #include <sys/ioctl.h>
++#endif
+ #include <sys/time.h>
+ #include <sys/times.h>
+ #endif // _WIN32
+@@ -822,7 +824,7 @@ int Main2(
+   SetFileApisToOEM();
+   #endif
+ 
+-#if 1 && !defined(_WIN32)
++#if 1 && !defined(_WIN32) && !defined(__amigaos__) /* AmigaDOS has no file-handle limit */
+   {
+     // We increase RLIMIT_NOFILE because a high limit makes it easier for 7-Zip to work with multi-volume archives.
+     struct rlimit a;
+@@ -999,7 +1001,7 @@ int Main2(
+     
+     #else
+     
+-#if !defined(__sun)
++#if !defined(__sun) && !defined(__amigaos__)
+     struct winsize w;
+     if (ioctl(0, TIOCGWINSZ, &w) == 0)
+       consoleWidth = w.ws_col;
+diff --git a/CPP/Windows/FileFind.cpp b/CPP/Windows/FileFind.cpp
+index 9902eff..bc834f6 100644
+--- a/CPP/Windows/FileFind.cpp
++++ b/CPP/Windows/FileFind.cpp
+@@ -1160,7 +1160,8 @@ void CFileInfoBase::SetFrom_stat(const struct stat &st)
+   MTime = st.st_mtimespec;
+   ATime = st.st_atimespec;
+ 
+-  #elif defined(__QNXNTO__) && defined(__ARM__) && !defined(__aarch64__)
++  #elif (defined(__QNXNTO__) && defined(__ARM__) && !defined(__aarch64__)) \
++      || defined(__amigaos__)
+   
+   // CTime = ST_CTIME(st);
+   // MTime = ST_MTIME(st);
+@@ -1337,7 +1338,11 @@ bool CEnumerator::NextAny(CDirEntry &fi, bool &found)
+ 
+   if (!_dir)
+   {
++#ifdef __amigaos__
++    const char *w = "";
++#else
+     const char *w = "./";
++#endif
+     if (!_wildcard.IsEmpty())
+       w = _wildcard.Ptr();
+     _dir = ::opendir((const char *)w);
+@@ -1435,7 +1440,13 @@ bool CEnumerator::Fill_FileInfo(const CDirEntry &de, CFileInfo &fileInfo, bool f
+   // printf("\nCEnumerator::Fill_FileInfo()\n");
+   struct stat st;
+   // probably it's OK to use fstatat() even if it changes file position dirfd(_dir)
++#ifdef __amigaos__
++  // no fstatat() in libnix: the drawer's name and the entry's
++  const FString path = _wildcard + de.Name;
++  int res = followLink ? stat(path, &st) : lstat(path, &st);
++#else
+   int res = fstatat(dirfd(_dir), de.Name, &st, followLink ? 0 : AT_SYMLINK_NOFOLLOW);
++#endif
+   // if fstatat() is not supported, we can use stat() / lstat()
+   
+   /*
+diff --git a/CPP/Windows/FileName.cpp b/CPP/Windows/FileName.cpp
+index eb62567..8161ed4 100644
+--- a/CPP/Windows/FileName.cpp
++++ b/CPP/Windows/FileName.cpp
+@@ -52,6 +52,11 @@ void NormalizeDirPathPrefix(FString &dirPath)
+ {
+   if (dirPath.IsEmpty())
+     return;
++#ifdef __amigaos__
++  // "Work:" is a volume's root: "Work:/" would be its parent
++  if (dirPath.Back() == ':')
++    return;
++#endif
+   if (!IsPathSepar(dirPath.Back()))
+     dirPath.Add_PathSepar();
+ }
+@@ -61,6 +66,10 @@ void NormalizeDirPathPrefix(UString &dirPath)
+ {
+   if (dirPath.IsEmpty())
+     return;
++#ifdef __amigaos__
++  if (dirPath.Back() == ':')
++    return;
++#endif
+   if (!IsPathSepar(dirPath.Back()))
+     dirPath.Add_PathSepar();
+ }
+@@ -412,7 +421,31 @@ unsigned GetRootPrefixSize_WINDOWS(const wchar_t *s) throw()
+   return GetRootPrefixSize_Of_SimplePath(s);
+ }
+ 
+-#ifndef _WIN32
++#if !defined(_WIN32) && defined(__amigaos__)
++
++/* AmigaDOS: an absolute path names its volume or assign ("Work:", "RAM:x");
++   a leading "/" means the parent drawer, so it is relative */
++template <class T> static unsigned Amiga_RootPrefixSize(const T *s) throw()
++{
++  for (unsigned i = 0; s[i] != 0; i++)
++  {
++    if (s[i] == ':')
++      return i + 1;
++    if (s[i] == '/')
++      return 0;
++  }
++  return 0;
++}
++
++bool IsAbsolutePath(const wchar_t *s) throw() { return Amiga_RootPrefixSize(s) != 0; }
++
++#ifndef USE_UNICODE_FSTRING
++unsigned GetRootPrefixSize(CFSTR s) throw();
++unsigned GetRootPrefixSize(CFSTR s) throw() { return Amiga_RootPrefixSize(s); }
++#endif
++unsigned GetRootPrefixSize(const wchar_t *s) throw() { return Amiga_RootPrefixSize(s); }
++
++#elif !defined(_WIN32)
+ 
+ bool IsAbsolutePath(const wchar_t *s) throw() { return IS_SEPAR(s[0]); }
+ 
+diff --git a/CPP/Windows/System.cpp b/CPP/Windows/System.cpp
+index c6e065a..800ce6e 100644
+--- a/CPP/Windows/System.cpp
++++ b/CPP/Windows/System.cpp
+@@ -9,6 +9,10 @@
+     || defined(BSD) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) \
+     || defined(__QNXNTO__)
+ #include <sys/sysctl.h>
++#elif defined(__amigaos__)
++// exec's AvailMem(MEMF_TOTAL), in GFAmiga7Zip's compat/amiga_compat.c (the
++// Amiga headers' BYTE, WORD and BOOL clash with 7-Zip's own)
++extern "C" unsigned long amiga_total_mem(void);
+ #else
+ #include <sys/sysinfo.h>
+ #endif
+@@ -353,6 +357,8 @@ bool GetRamSize(size_t &size)
+         size64 = (UInt64)(Int64)phys_pages * (UInt64)(Int64)page_size;
+     }
+     #endif
++  #elif defined(__amigaos__)
++    size64 = amiga_total_mem();
+   #elif defined(__gnu_hurd__)
+   // fixme
+   #elif defined(__FreeBSD_kernel__) && defined(__GLIBC__)
+diff --git a/CPP/Windows/TimeUtils.h b/CPP/Windows/TimeUtils.h
+index 8e1e478..41dba8b 100644
+--- a/CPP/Windows/TimeUtils.h
++++ b/CPP/Windows/TimeUtils.h
+@@ -65,8 +65,9 @@ inline bool FILETIME_IsZero(const FILETIME &ft)
+   #define ST_MTIME(st) st.st_mtimespec
+   #define ST_ATIME(st) st.st_atimespec
+   #define ST_CTIME(st) st.st_ctimespec
+- #elif defined(__QNXNTO__) && defined(__ARM__) && !defined(__aarch64__)
+-  // QNX armv7le (32-bit) for "struct stat" timestamps uses time_t instead of timespec
++ #elif (defined(__QNXNTO__) && defined(__ARM__) && !defined(__aarch64__)) \
++     || defined(__amigaos__)
++  // QNX armv7le (and libnix on the Amiga) (32-bit) for "struct stat" timestamps uses time_t instead of timespec
+   inline CFiTime ST_MTIME(const struct stat &st)
+     { timespec ts;  ts.tv_sec = st.st_mtime; ts.tv_nsec = 0;  return ts; }
+   inline CFiTime ST_ATIME(const struct stat &st)

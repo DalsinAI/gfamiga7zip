@@ -1,0 +1,6 @@
+# What this port builds on: fetched at build time, never shipped.
+# 7-Zip 26.06 (GNU LGPL 2.1 or later; Rar* files also the unRAR licence
+# restriction; see LICENSE), ip7z/7zip d3296e3 (7 Nov 2026)
+SZ_GIT=https://github.com/ip7z/7zip.git
+SZ_COMMIT=d3296e39e1f1f92c7b41c0c3848e65640428d42d
+SZ_VERSION=26.06
