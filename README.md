@@ -6,7 +6,7 @@
 - Needs a 68040. Single-threaded build; no other part needed.
 - Install: `GFOpenUpTool INSTALL Parts/7Zip`. It goes to `SYS:C/7zz`, with the licence and readme in `SYS:Docs/7-Zip`.
 - AmigaDOS paths work as usual: `7zz a RAM:backup.7z Work:Projects/`, `7zz x Work:Downloads/game.zip -oWork:Games/`.
-- Use a Shell stack of at least 256 KB for big archives (the program sets its own).
+- It sets up its own 256 KB stack, so the Shell's stack size does not matter.
 
 Build with a stove: `STOVE=.../os32-gcc16-open6 OUT=out ./build-amiga.sh`. 7-Zip itself is fetched at the commit in `7zip.lock` and patched with `patches/`; nothing third-party is kept here. Host tests: `make -C tests test`.
 
